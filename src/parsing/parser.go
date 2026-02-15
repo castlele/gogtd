@@ -39,17 +39,17 @@ Projects:
     gogtd delete-project <id>
     gogtd add-step <project_id> --message=<message>`
 
-func ParseArguments(args []string) commands.Command {
+func ParseArguments(args []string, factory commands.CommandsFactory) commands.Command {
 	if len(args) < 2 {
-		return helpCommand()
+		return helpCommand(factory)
 	}
 
 	switch args[1] {
 	case "help":
-		return helpCommand()
+		return helpCommand(factory)
 
 	case "inbox":
-		return commands.NewInboxCommand()
+		return factory.Inbox()
 	case "add-inbox":
 		return nil
 	case "update-inbox":
@@ -78,10 +78,10 @@ func ParseArguments(args []string) commands.Command {
 		return nil
 
 	default:
-		return helpCommand()
+		return helpCommand(factory)
 	}
 }
 
-func helpCommand() commands.Command {
-	return commands.NewHelpCommand(helpMessage)
+func helpCommand(factory commands.CommandsFactory) commands.Command {
+	return factory.Help(helpMessage)
 }

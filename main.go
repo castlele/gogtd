@@ -4,11 +4,13 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/castlele/gogtd/src/commands"
 	"github.com/castlele/gogtd/src/parsing"
 )
 
 func main() {
-	cmd := parsing.ParseArguments(os.Args)
+	factory := commands.NewCommandsFactory()
+	cmd := parsing.ParseArguments(os.Args, factory)
 
 	if cmd != nil {
 		os.Exit(cmd.Execute())
