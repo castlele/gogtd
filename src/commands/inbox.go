@@ -1,15 +1,28 @@
 package commands
 
-import "fmt"
+import (
+	"fmt"
+	"io"
+
+	"github.com/castlele/gogtd/src/domain/inbox"
+)
 
 type inboxCommand struct {
+	inboxInteractor inbox.Inbox
+	successOut      io.Writer
 }
 
-func newInboxCommand() *inboxCommand {
-	return &inboxCommand{}
+func newInboxCommand(
+	inboxInteractor inbox.Inbox,
+	successOut io.Writer,
+) *inboxCommand {
+	return &inboxCommand{
+		inboxInteractor: inboxInteractor,
+		successOut:      successOut,
+	}
 }
 
-func (_ *inboxCommand) Execute() int {
-	fmt.Println("Tasks")
+func (this *inboxCommand) Execute() int {
+	fmt.Fprintln(this.successOut, this.inboxInteractor.GetAll())
 	return 0
 }

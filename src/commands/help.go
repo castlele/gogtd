@@ -2,20 +2,22 @@ package commands
 
 import (
 	"fmt"
-	"os"
+	"io"
 )
 
 type helpCommand struct {
 	message string
+	output  io.Writer
 }
 
-func newHelpCommand(message string) *helpCommand {
+func newHelpCommand(message string, output io.Writer) *helpCommand {
 	return &helpCommand{
 		message: message,
+		output:  output,
 	}
 }
 
 func (cmd *helpCommand) Execute() int {
-	fmt.Fprintln(os.Stdout, cmd.message)
+	fmt.Fprint(cmd.output, cmd.message)
 	return 0
 }

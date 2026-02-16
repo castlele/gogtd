@@ -4,40 +4,46 @@ import (
 	"github.com/castlele/gogtd/src/commands"
 )
 
-const helpMessage = `
-Usage:
-    gogtd help
+const (
+	helpMessage = `
 
-Inbox:
-    gogtd inbox
-    gogtd add-inbox <Message>
-    gogtd update-inbox <id> [--message=<message>]
-    gogtd delete-inbox <id>
+	Usage:
+		gogtd help
 
-Clarify:
-    gogtd tasks [--box=<name>] [--project=<name>] [--favourite=<boolean>]
-    gogtd add-task
-        [--box=<name>]
-        [--project=<name>]
-        [--tags=<tags comma separated>]
-        --message=<message>
-        --time=<millis>
-        --energy=<low|mid|high>
-    gogtd update-task <id>
-        [--box=<name>]
-        [--project=<name>]
-        [--tags=<tags comma separated>]
-        [--message=<message>]
-        [--time=<millis>]
-        [--energy=<low|mid|high>]
-    gogtd delete-task <id>
-    gogtd toggle-favourite <task_id>
+	Inbox:
+		gogtd inbox
+		gogtd add-inbox <Message>
+		gogtd update-inbox <id> [--message=<message>]
+		gogtd delete-inbox <id>
 
-Projects:
-    gogtd projects
-    gogtd add-project <name>
-    gogtd delete-project <id>
-    gogtd add-step <project_id> --message=<message>`
+	Clarify:
+		gogtd tasks [--box=<name>] [--project=<name>] [--favourite=<boolean>]
+		gogtd add-task
+			[--box=<name>]
+			[--project=<name>]
+			[--tags=<tags comma separated>]
+			--message=<message>
+			--time=<millis>
+			--energy=<low|mid|high>
+		gogtd update-task <id>
+			[--box=<name>]
+			[--project=<name>]
+			[--tags=<tags comma separated>]
+			[--message=<message>]
+			[--time=<millis>]
+			[--energy=<low|mid|high>]
+		gogtd delete-task <id>
+		gogtd toggle-favourite <task_id>
+
+	Projects:
+		gogtd projects
+		gogtd add-project <name>
+		gogtd delete-project <id>
+		gogtd add-step <project_id> --message=<message>`
+
+	inboxNoMessage    = "No message passed to create an inbox item"
+	inboxNoIdToDelete = "No id passed to delete an inbox item"
+)
 
 func ParseArguments(args []string, factory commands.CommandsFactory) commands.Command {
 	if len(args) < 2 {
@@ -51,11 +57,31 @@ func ParseArguments(args []string, factory commands.CommandsFactory) commands.Co
 	case "inbox":
 		return factory.Inbox()
 	case "add-inbox":
-		return nil
+		if len(args) < 3 {
+			return factory.Error(inboxNoMessage)
+		}
+
+		message := args[2]
+
+		if message == "" {
+			return factory.Error(inboxNoMessage)
+		}
+
+		return factory.AddInbox(message)
 	case "update-inbox":
 		return nil
 	case "delete-inbox":
-		return nil
+		if len(args) < 3 {
+			return factory.Error(inboxNoIdToDelete)
+		}
+
+		id := args[2]
+
+		if id == "" {
+			return factory.Error(inboxNoIdToDelete)
+		}
+
+		return factory.DeleteInbox(id)
 
 	case "tasks":
 		return nil
