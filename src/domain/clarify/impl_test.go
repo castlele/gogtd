@@ -69,7 +69,7 @@ func TestAddTask(t *testing.T) {
 			utils.Delete(storageFp)
 			sut := createInteractor()
 
-			task, err := sut.AddTask("random")
+			task, err := sut.AddTask("random", 0, models.EnergyLow, nil)
 
 			if task != nil {
 				t.Errorf("Unexpected task. Expecting nil, but got: %v", task)
@@ -100,7 +100,37 @@ func TestAddTask(t *testing.T) {
 				Message: msg,
 			})
 
-			task, err := sut.AddTask(id)
+			task, err := sut.AddTask(id, 0, models.EnergyHigh, nil)
+
+			if err != nil {
+				panic(err)
+			}
+
+			if task.Message != msg {
+				t.Errorf("Invalid task message. Expecting: %v, got: %v", msg, task.Message)
+				return
+			}
+
+			if task.Energy != models.EnergyHigh {
+				t.Errorf("Invalid energy level. Expected: %v, got: %v", models.EnergyHigh, task.Energy)
+				return
+			}
+		},
+	)
+
+	t.Run(
+		"GIVEN none empy inbox repo WHEN adding new task with energy THEN task is created with energy",
+		func(t *testing.T) {
+			utils.Delete(storageFp)
+			sut := createInteractor()
+			id := "random_id"
+			msg := "Super puper hello world"
+			sut.inboxItemsRepo.Create(models.InboxItem{
+				Id:      id,
+				Message: msg,
+			})
+
+			task, err := sut.AddTask(id, 0, models.EnergyLow, nil)
 
 			if err != nil {
 				t.Errorf("Got unexpected error: %v", err)
@@ -125,6 +155,92 @@ func TestAddTask(t *testing.T) {
 
 			if len(items) != 0 {
 				t.Errorf("Item wasn't deleted from repo. Expected 0, but got: %v", len(items))
+				return
+			}
+		},
+	)
+
+	t.Run(
+		"GIVEN none empy inbox repo WHEN adding new task with time THEN task is created with time",
+		func(t *testing.T) {
+			utils.Delete(storageFp)
+			sut := createInteractor()
+			id := "random_id"
+			msg := "Super puper hello world"
+			sut.inboxItemsRepo.Create(models.InboxItem{
+				Id:      id,
+				Message: msg,
+			})
+			time := int64(60 * 1000)
+
+			task, err := sut.AddTask(id, time, models.EnergyLow, nil)
+
+			if err != nil {
+				t.Errorf("Got unexpected error: %v", err)
+				return
+			}
+
+			if task == nil {
+				t.Errorf("Task is nil. Expecting task with message: %v", msg)
+				return
+			}
+
+			if task.Message != msg {
+				t.Errorf("Invalid task message. Expecting: %v, got: %v", msg, task.Message)
+				return
+			}
+
+			if task.Time != time {
+				t.Errorf("Invalid time value. Expected: %v, got: %v", time, task.Time)
+				return
+			}
+		},
+	)
+
+	t.Run(
+		"GIVEN new task added WHEN no parent specified THEN task is added to the BoxTypeNext",
+		func(t *testing.T) {
+			utils.Delete(storageFp)
+			sut := createInteractor()
+			id := "random_id"
+			msg := "Super puper hello world"
+			sut.inboxItemsRepo.Create(models.InboxItem{
+				Id:      id,
+				Message: msg,
+			})
+
+			task, err := sut.AddTask(id, 0, models.EnergyLow, nil)
+
+			if err != nil {
+				t.Errorf("Got unexpected error: %v", err)
+				return
+			}
+
+			if task == nil {
+				t.Errorf("Task is nil. Expecting task with message: %v", msg)
+				return
+			}
+
+			if task.Message != msg {
+				t.Errorf("Invalid task message. Expecting: %v, got: %v", msg, task.Message)
+				return
+			}
+
+			if task.Parent.Type != models.BoxParentType {
+				t.Errorf(
+					"Invalid parent type value. Expected: %v, got: %v",
+					models.BoxParentType,
+					task.Parent.Type,
+				)
+				return
+			}
+
+			if task.Parent.Id != models.BoxTypeNext.String() {
+				t.Errorf(
+					"Invalid parent id value: Expected: %v, got: %v",
+					models.BoxTypeNext.String(),
+					task.Parent.Id,
+				)
 				return
 			}
 		},

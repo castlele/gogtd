@@ -13,6 +13,13 @@ type TaskParent struct {
 	Type TaskParentType `json:"type"`
 }
 
+func NewNextTaskParent() TaskParent {
+	return TaskParent{
+		Id:   BoxTypeNext.String(),
+		Type: BoxParentType,
+	}
+}
+
 type TaskParentType int
 
 const (

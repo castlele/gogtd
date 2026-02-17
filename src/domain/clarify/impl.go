@@ -35,7 +35,12 @@ func (this *clarifyImpl) GetAll() []models.Task {
 	return tasks
 }
 
-func (this *clarifyImpl) AddTask(inboxItemId string) (*models.Task, error) {
+func (this *clarifyImpl) AddTask(
+	inboxItemId string,
+	time int64,
+	energy models.Energy,
+	parent *models.TaskParent,
+) (*models.Task, error) {
 	_, err := this.inboxItemsRepo.Get(inboxItemId)
 
 	if err != nil {
@@ -48,7 +53,15 @@ func (this *clarifyImpl) AddTask(inboxItemId string) (*models.Task, error) {
 		return nil, err
 	}
 
-	task := this.createTask(&inboxItem)
+	var copyParent models.TaskParent
+
+	if parent != nil {
+		copyParent = *parent
+	} else {
+		copyParent = models.NewNextTaskParent()
+	}
+
+	task := this.createTask(&inboxItem, time, energy, copyParent)
 
 	return &task, nil
 }
@@ -57,9 +70,17 @@ func (c *clarifyImpl) DeleteTask(id string) (*models.Task, error) {
 	panic("unimplemented")
 }
 
-func (c *clarifyImpl) createTask(item *models.InboxItem) models.Task {
+func (c *clarifyImpl) createTask(
+	item *models.InboxItem,
+	time int64,
+	energy models.Energy,
+	parent models.TaskParent,
+) models.Task {
 	return models.Task{
 		Id:      uuid.NewString(),
 		Message: item.Message,
+		Time:    time,
+		Energy:  energy,
+		Parent:  parent,
 	}
 }

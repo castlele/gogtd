@@ -1,14 +1,13 @@
 package models
 
-type BoxType int
+type BoxType string
 
 const (
-	Next BoxType = iota
-	Waiting
-	SomedayMaybe
+	BoxTypeNext         BoxType = "BoxTypeNext"
+	BoxTypeWaiting      BoxType = "BoxTypeWaiting"
+	BoxTypeSomedayMaybe BoxType = "BoxTypeSomedayMaybe"
 )
 
-type Box struct {
-	Id   string  `json:"id"`
-	Type BoxType `json:"type"`
+func (bt BoxType) String() string {
+	return string(bt)
 }
