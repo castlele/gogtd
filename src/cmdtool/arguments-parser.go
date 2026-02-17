@@ -1,45 +1,43 @@
-package parsing
+package cmdtool
 
 import (
 	"github.com/castlele/gogtd/src/commands"
 )
 
 const (
-	helpMessage = `
+	helpMessage = `Usage:
+	gogtd help
 
-	Usage:
-		gogtd help
+Inbox:
+	gogtd inbox
+	gogtd add-inbox <Message>
+	gogtd update-inbox <id> [--message=<message>]
+	gogtd delete-inbox <id>
 
-	Inbox:
-		gogtd inbox
-		gogtd add-inbox <Message>
-		gogtd update-inbox <id> [--message=<message>]
-		gogtd delete-inbox <id>
+Clarify:
+	gogtd tasks [--box=<name>] [--project=<name>] [--favourite=<boolean>]
+	gogtd add-task
+		[--box=<name>]
+		[--project=<name>]
+		[--tags=<tags comma separated>]
+		--message=<message>
+		--time=<millis>
+		--energy=<low|mid|high>
+	gogtd update-task <id>
+		[--box=<name>]
+		[--project=<name>]
+		[--tags=<tags comma separated>]
+		[--message=<message>]
+		[--time=<millis>]
+		[--energy=<low|mid|high>]
+	gogtd delete-task <id>
+	gogtd toggle-favourite <task_id>
 
-	Clarify:
-		gogtd tasks [--box=<name>] [--project=<name>] [--favourite=<boolean>]
-		gogtd add-task
-			[--box=<name>]
-			[--project=<name>]
-			[--tags=<tags comma separated>]
-			--message=<message>
-			--time=<millis>
-			--energy=<low|mid|high>
-		gogtd update-task <id>
-			[--box=<name>]
-			[--project=<name>]
-			[--tags=<tags comma separated>]
-			[--message=<message>]
-			[--time=<millis>]
-			[--energy=<low|mid|high>]
-		gogtd delete-task <id>
-		gogtd toggle-favourite <task_id>
-
-	Projects:
-		gogtd projects
-		gogtd add-project <name>
-		gogtd delete-project <id>
-		gogtd add-step <project_id> --message=<message>`
+Projects:
+	gogtd projects
+	gogtd add-project <name>
+	gogtd delete-project <id>
+	gogtd add-step <project_id> --message=<message>`
 
 	inboxNoMessage    = "No message passed to create an inbox item"
 	inboxNoIdToDelete = "No id passed to delete an inbox item"

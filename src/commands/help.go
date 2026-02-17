@@ -18,6 +18,6 @@ func newHelpCommand(message string, output io.Writer) *helpCommand {
 }
 
 func (cmd *helpCommand) Execute() int {
-	fmt.Fprint(cmd.output, cmd.message)
+	fmt.Fprintln(cmd.output, cmd.message)
 	return 0
 }

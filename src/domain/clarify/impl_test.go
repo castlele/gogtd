@@ -1,0 +1,164 @@
+package clarify
+
+import (
+	"errors"
+	"testing"
+
+	"github.com/castlele/gogtd/src/domain/models"
+	"github.com/castlele/gogtd/src/domain/repository"
+	"github.com/castlele/gogtd/src/utils"
+	"github.com/google/uuid"
+)
+
+const (
+	storageFp = "./gdt"
+	tasksFp   = storageFp + "/tasks.json"
+)
+
+func TestGetAll(t *testing.T) {
+	t.Run(
+		"GIVEN empty repository WHEN getting all tasks THEN returning empty tasks list",
+		func(t *testing.T) {
+			utils.Delete(storageFp)
+			sut := createInteractor()
+
+			tasks := sut.GetAll()
+
+			if len(tasks) > 0 {
+				t.Errorf(
+					"Invalid amount of tasks in the repo. Expected 0, but got: %v. Tasks: %v",
+					len(tasks),
+					tasks,
+				)
+			}
+		},
+	)
+
+	t.Run(
+		"GIVEN non empty repository WHEN getting all tasks THEN returning the same tasks as in repo",
+		func(t *testing.T) {
+			utils.Delete(storageFp)
+			task := models.Task{
+				Id:      uuid.NewString(),
+				Message: "Hello, World",
+				Time:    900_000,
+				Energy:  models.EnergyLow,
+			}
+			sut := createInteractor()
+			sut.tasksRepo.Create(task)
+
+			tasks := sut.GetAll()
+
+			if len(tasks) != 1 {
+				t.Errorf("Invalid amount of tasks. Expected: 1, got: %v", len(tasks))
+				return
+			}
+
+			if tasks[0] != task {
+				t.Errorf("Invalid task got. Expected: %v, got: %v", tasks[0], task)
+				return
+			}
+		},
+	)
+}
+
+func TestAddTask(t *testing.T) {
+	t.Run(
+		"GIVEN empty inbox repo WHEN adding new task THEN error is thrown",
+		func(t *testing.T) {
+			utils.Delete(storageFp)
+			sut := createInteractor()
+
+			task, err := sut.AddTask("random")
+
+			if task != nil {
+				t.Errorf("Unexpected task. Expecting nil, but got: %v", task)
+				return
+			}
+
+			if err == nil {
+				t.Errorf("Error is nil, while expecting the an error")
+				return
+			}
+
+			if !errors.Is(err, repository.ErrNotFound) {
+				t.Errorf("Error of invalid type. Expected ErrNotFound, got: %v", err)
+				return
+			}
+		},
+	)
+
+	t.Run(
+		"GIVEN none empy inbox repo WHEN adding new task THEN task is created and inbox item is deleted",
+		func(t *testing.T) {
+			utils.Delete(storageFp)
+			sut := createInteractor()
+			id := "random_id"
+			msg := "Super puper hello world"
+			sut.inboxItemsRepo.Create(models.InboxItem{
+				Id:      id,
+				Message: msg,
+			})
+
+			task, err := sut.AddTask(id)
+
+			if err != nil {
+				t.Errorf("Got unexpected error: %v", err)
+				return
+			}
+
+			if task == nil {
+				t.Errorf("Task is nil. Expecting task with message: %v", msg)
+				return
+			}
+
+			if task.Message != msg {
+				t.Errorf("Invalid task message. Expecting: %v, got: %v", msg, task.Message)
+				return
+			}
+
+			items, err := sut.inboxItemsRepo.List()
+
+			if err != nil {
+				panic(err)
+			}
+
+			if len(items) != 0 {
+				t.Errorf("Item wasn't deleted from repo. Expected 0, but got: %v", len(items))
+				return
+			}
+		},
+	)
+}
+
+func TestDeleteTask(t *testing.T) {
+	t.Run(
+		"",
+		func(t *testing.T) {
+		},
+	)
+}
+
+func createInteractor() *clarifyImpl {
+	return NewClarifyInteractor(createTasksRepo(), createInboxItemsRepo())
+}
+
+func createTasksRepo() repository.Repo[models.Task, string] {
+	repo, err := repository.NewFPRepo(tasksFp, func(task models.Task) string { return task.Id })
+
+	if err != nil {
+		panic(err)
+	}
+
+	return repo
+}
+
+func createInboxItemsRepo() repository.Repo[models.InboxItem, string] {
+	repo, err := repository.NewFPRepo(tasksFp, func(item models.InboxItem) string { return item.Id })
+
+	if err != nil {
+		panic(err)
+	}
+
+	return repo
+}

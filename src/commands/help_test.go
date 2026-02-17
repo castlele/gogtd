@@ -14,7 +14,7 @@ func TestExecute(t *testing.T) {
 
 	actualMsg := actualMsgBuf.String()
 
-	if actualMsg != expMsg {
-		t.Fatalf("got %q, want %q", actualMsg, expMsg)
+	if actualMsg != expMsg+"\n" {
+		t.Fatalf("got %q, want %q", actualMsg, expMsg+"\n")
 	}
 }

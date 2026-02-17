@@ -4,12 +4,12 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/castlele/gogtd/src/cmdtool"
 	"github.com/castlele/gogtd/src/commands"
 	"github.com/castlele/gogtd/src/config"
 	"github.com/castlele/gogtd/src/domain/inbox"
 	"github.com/castlele/gogtd/src/domain/models"
 	"github.com/castlele/gogtd/src/domain/repository"
-	"github.com/castlele/gogtd/src/parsing"
 )
 
 func main() {
@@ -39,7 +39,7 @@ func main() {
 		os.Stdout,
 		os.Stderr,
 	)
-	cmd := parsing.ParseArguments(os.Args, factory)
+	cmd := cmdtool.ParseArguments(os.Args, factory)
 
 	if cmd != nil {
 		os.Exit(cmd.Execute())
