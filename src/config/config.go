@@ -5,8 +5,9 @@ type Config struct {
 }
 
 const (
-	inbox = "/inbox.json"
-	tasks = "/tasks.json"
+	inbox     = "/inbox.json"
+	tasks     = "/tasks.json"
+	doneTasks = "/done_tasks.json"
 )
 
 func (this *Config) GetInboxPath() string {
@@ -15,4 +16,8 @@ func (this *Config) GetInboxPath() string {
 
 func (this *Config) GetTasksPath() string {
 	return this.Storage + tasks
+}
+
+func (this *Config) GetDoneTasksPath() string {
+	return this.Storage + doneTasks
 }

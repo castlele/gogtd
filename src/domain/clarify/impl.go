@@ -8,6 +8,7 @@ import (
 
 type clarifyImpl struct {
 	tasksRepo      repository.Repo[models.Task, string]
+	doneTasksRepo  repository.Repo[models.Task, string]
 	inboxItemsRepo repository.Repo[models.InboxItem, string]
 }
 
@@ -17,10 +18,12 @@ const (
 
 func NewClarifyInteractor(
 	tasksRepo repository.Repo[models.Task, string],
+	doneTasksRepo repository.Repo[models.Task, string],
 	inboxItemsRepo repository.Repo[models.InboxItem, string],
 ) *clarifyImpl {
 	return &clarifyImpl{
 		tasksRepo:      tasksRepo,
+		doneTasksRepo:  doneTasksRepo,
 		inboxItemsRepo: inboxItemsRepo,
 	}
 }
@@ -118,15 +121,57 @@ func (this *clarifyImpl) SetStatus(
 		return nil, err
 	}
 
+	prevStatus := task.Status
 	task.Status = status
 
-	err = this.tasksRepo.Update(task)
+	if status == models.TaskStatusDone {
+		this.migrateTaskToDone(task)
 
-	if err != nil {
-		return nil, err
+	} else {
+		if prevStatus == models.TaskStatusDone {
+			this.migrateTaskFromDone(task)
+		} else {
+			err = this.tasksRepo.Update(task)
+
+			if err != nil {
+				return nil, err
+			}
+		}
 	}
 
 	return &task, nil
+}
+
+func (this *clarifyImpl) migrateTaskToDone(task models.Task) error {
+	_, err := this.tasksRepo.Delete(task.Id)
+
+	if err != nil {
+		return err
+	}
+
+	err = this.doneTasksRepo.Create(task)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (this *clarifyImpl) migrateTaskFromDone(task models.Task) error {
+	_, err := this.doneTasksRepo.Delete(task.Id)
+
+	if err != nil {
+		return err
+	}
+
+	err = this.tasksRepo.Create(task)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (_ *clarifyImpl) createTask(

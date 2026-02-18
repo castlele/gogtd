@@ -45,7 +45,23 @@ func main() {
 		os.Exit(-1)
 	}
 
-	clarifyInteractor := clarify.NewClarifyInteractor(tasksRepo, inboxRepo)
+	doneTasksRepo, err := repository.NewFPRepo(
+		conf.GetDoneTasksPath(),
+		func(task models.Task) string {
+			return task.Id
+		},
+	)
+
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(-1)
+	}
+
+	clarifyInteractor := clarify.NewClarifyInteractor(
+		tasksRepo,
+		doneTasksRepo,
+		inboxRepo,
+	)
 	inboxInteractor := inbox.NewInboxInteractor(inboxRepo)
 
 	factory := commands.NewCommandsFactory(

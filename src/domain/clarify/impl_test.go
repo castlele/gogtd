@@ -11,9 +11,10 @@ import (
 )
 
 const (
-	storageFp = "./gdt"
-	inboxFp   = storageFp + "/inbox.json"
-	tasksFp   = storageFp + "/tasks.json"
+	storageFp   = "./gdt"
+	inboxFp     = storageFp + "/inbox.json"
+	tasksFp     = storageFp + "/tasks.json"
+	doneTasksFp = storageFp + "/done_tasks.json"
 )
 
 func TestGetAll(t *testing.T) {
@@ -589,14 +590,89 @@ func TestSetStatus(t *testing.T) {
 			}
 		},
 	)
+
+	t.Run(
+		"GIVEN task in pending status "+
+			"WHEN setting done status "+
+			"THEN status is changed and task is moved to the done repo",
+		func(t *testing.T) {
+			utils.Delete(storageFp)
+			id := "random"
+			initialTask := models.Task{Id: id, Status: models.TaskStatusPending}
+			sut := createInteractor()
+			sut.tasksRepo.Create(initialTask)
+
+			task, err := sut.SetStatus(id, models.TaskStatusDone)
+
+			if err != nil {
+				panic(err)
+			}
+
+			if task.Id != initialTask.Id {
+				t.Errorf(
+					"Invalid task was changed. Expected: %v, got: %v",
+					initialTask.Id,
+					task.Id,
+				)
+			}
+
+			if task.Status == initialTask.Status {
+				t.Errorf(
+					"Status wasn't changed. Expected: %v, got: %v",
+					initialTask,
+					task,
+				)
+			}
+
+			tasks, err := sut.tasksRepo.List()
+
+			if err != nil {
+				panic(err)
+			}
+
+			if len(tasks) != 0 {
+				t.Errorf(
+					"Invalid amount of tasks in the original repo. Expected: 0, got: %v",
+					len(tasks),
+				)
+			}
+
+			tasks, err = sut.doneTasksRepo.List()
+
+			if err != nil {
+				panic(err)
+			}
+
+			if len(tasks) != 1 {
+				t.Errorf(
+					"Invalid amount of tasks in the done repo. Expected: 1, got: %v",
+					len(tasks),
+				)
+			}
+		},
+	)
 }
 
 func createInteractor() *clarifyImpl {
-	return NewClarifyInteractor(createTasksRepo(), createInboxItemsRepo())
+	return NewClarifyInteractor(
+		createTasksRepo(),
+		createDoneTasksRepo(),
+		createInboxItemsRepo(),
+	)
 }
 
 func createTasksRepo() repository.Repo[models.Task, string] {
 	repo, err := repository.NewFPRepo(tasksFp, func(task models.Task) string { return task.Id })
+
+	if err != nil {
+		panic(err)
+	}
+
+	return repo
+}
+
+func createDoneTasksRepo() repository.Repo[models.Task, string] {
+	repo, err := repository.NewFPRepo(doneTasksFp, func(task models.Task) string { return task.Id })
 
 	if err != nil {
 		panic(err)
