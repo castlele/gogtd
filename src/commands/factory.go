@@ -17,11 +17,13 @@ type CommandsFactory interface {
 		id string,
 		time int64,
 		energy string,
+		parent string,
 	) Command
 	AddTask(
 		message string,
 		time int64,
 		energy string,
+		parent string,
 	) Command
 	DeleteTask(id string) Command
 	ToggleFavourite(id string) Command
@@ -86,11 +88,13 @@ func (this *commandsFactoryImpl) AddTaskFromInbox(
 	id string,
 	time int64,
 	energy string,
+	parent string,
 ) Command {
 	return newAddFromInboxTaskCommand(
 		id,
 		time,
 		energy,
+		parent,
 		this.clarifyInteractor,
 		this.successOut,
 		this.errOut,
@@ -101,11 +105,13 @@ func (this *commandsFactoryImpl) AddTask(
 	message string,
 	time int64,
 	energy string,
+	parent string,
 ) Command {
 	return newCreateTaskCommand(
 		message,
 		time,
 		energy,
+		parent,
 		this.clarifyInteractor,
 		this.successOut,
 		this.errOut,

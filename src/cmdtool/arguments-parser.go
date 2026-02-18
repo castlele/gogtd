@@ -159,6 +159,8 @@ func createAddTaskCommand(
 	time := fs.Int64("time", 0, "")
 	energy := fs.String("energy", "low", "")
 
+	parent := fs.String("parent", "", "")
+
 	fs.Parse(args[2:])
 
 	if *message != "" && *id != "" {
@@ -170,12 +172,14 @@ func createAddTaskCommand(
 			*id,
 			*time,
 			*energy,
+			*parent,
 		)
 	} else {
 		return factory.AddTask(
 			*message,
 			*time,
 			*energy,
+			*parent,
 		)
 	}
 }
