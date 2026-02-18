@@ -2,7 +2,6 @@ package cmdtool
 
 import (
 	"flag"
-	"fmt"
 
 	"github.com/castlele/gogtd/src/commands"
 )
@@ -20,8 +19,7 @@ Inbox:
 Clarify:
 	gogtd tasks [-box=<name>] [-project=<name>] [-favourite=<boolean>] [-status=<(pending|in_progress|done)>]
 	gogtd add-task
-		[-box=<name>]
-		[-project=<name>]
+		[-parent="id::<box|project|step>"]
 		[-tags=<tags comma separated>]
 		-message=<message>/-inbox_id=<id>
 		-time=<millis>
@@ -35,7 +33,7 @@ Clarify:
 		[-energy=<low|mid|high>]
 	gogtd delete-task <id>
 	gogtd toggle-favourite <task_id>
-	gogtd set-status <task_id> <status>(pending|in_progress|done)
+	gogtd set-status <task_id> <pending|in_progress|done>
 
 Projects:
 	gogtd projects
@@ -44,7 +42,9 @@ Projects:
 	gogtd add-step <project_id> -message=<message>`
 
 	inboxNoMessage    = "No message passed to create an inbox item"
-	inboxNoIdToDelete = "No id passed to delete an inbox item"
+	inboxNoIdToPassed = "No id passed to identify an inbox item"
+
+	taskNoIdPassed = "No id passed to identify a task"
 
 	addTasksNoMandatoryArguments = "One of the arguments are not provided: " +
 		"-message/-inbox_id, -time, -energy"
@@ -64,28 +64,20 @@ func ParseArguments(args []string, factory commands.CommandsFactory) commands.Co
 	case "inbox":
 		return factory.Inbox()
 	case "add-inbox":
-		if len(args) < 3 {
-			return factory.Error(inboxNoMessage)
-		}
+		command, message := parseId(factory, args, inboxNoMessage)
 
-		message := args[2]
-
-		if message == "" {
-			return factory.Error(inboxNoMessage)
+		if command != nil {
+			return command
 		}
 
 		return factory.AddInbox(message)
 	case "update-inbox":
 		return nil
 	case "delete-inbox":
-		if len(args) < 3 {
-			return factory.Error(inboxNoIdToDelete)
-		}
+		command, id := parseId(factory, args, inboxNoIdToPassed)
 
-		id := args[2]
-
-		if id == "" {
-			return factory.Error(inboxNoIdToDelete)
+		if command != nil {
+			return command
 		}
 
 		return factory.DeleteInbox(id)
@@ -93,54 +85,26 @@ func ParseArguments(args []string, factory commands.CommandsFactory) commands.Co
 	case "tasks":
 		return factory.Tasks()
 	case "add-task":
-		if len(args) < 5 {
-			return factory.Error(addTasksNoMandatoryArguments)
-		}
-
-		fs := flag.NewFlagSet("add-task", flag.ContinueOnError)
-
-		id := fs.String("inbox_id", "", "")
-		message := fs.String("message", "", "")
-
-		time := fs.Int64("time", 0, "")
-		energy := fs.String("energy", "low", "")
-
-		fs.Parse(args[2:])
-
-		if *message != "" && *id != "" {
-			return factory.Error(taskBothIdAndMessageProvided)
-		}
-
-		fmt.Println(*id, *message, *time, *energy)
-
-		if *id != "" {
-			return factory.AddTaskFromInbox(
-				*id,
-				*time,
-				*energy,
-			)
-		} else {
-			return factory.AddTask(
-				*message,
-				*time,
-				*energy,
-			)
-		}
+		return createAddTaskCommand(factory, args)
 	case "update-task":
 		return nil
 	case "delete-task":
-		if len(args) < 3 {
-			return factory.Error(inboxNoIdToDelete)
-		}
+		command, id := parseId(factory, args, taskNoIdPassed)
 
-		id := args[2]
-
-		if id == "" {
-			return factory.Error(inboxNoIdToDelete)
+		if command != nil {
+			return command
 		}
 
 		return factory.DeleteTask(id)
 	case "toggle-favourite":
+		command, id := parseId(factory, args, taskNoIdPassed)
+
+		if command != nil {
+			return command
+		}
+
+		return factory.ToggleFavourite(id)
+	case "set-status":
 		return nil
 
 	case "projects":
@@ -159,4 +123,59 @@ func ParseArguments(args []string, factory commands.CommandsFactory) commands.Co
 
 func helpCommand(factory commands.CommandsFactory) commands.Command {
 	return factory.Help(helpMessage)
+}
+
+func parseId(
+	factory commands.CommandsFactory,
+	args []string,
+	errMsg string,
+) (commands.Command, string) {
+	if len(args) < 3 {
+		return factory.Error(errMsg), ""
+	}
+
+	id := args[2]
+
+	if id == "" {
+		return factory.Error(errMsg), ""
+	}
+
+	return nil, id
+}
+
+func createAddTaskCommand(
+	factory commands.CommandsFactory,
+	args []string,
+) commands.Command {
+	if len(args) < 5 {
+		return factory.Error(addTasksNoMandatoryArguments)
+	}
+
+	fs := flag.NewFlagSet("add-task", flag.ContinueOnError)
+
+	id := fs.String("inbox_id", "", "")
+	message := fs.String("message", "", "")
+
+	time := fs.Int64("time", 0, "")
+	energy := fs.String("energy", "low", "")
+
+	fs.Parse(args[2:])
+
+	if *message != "" && *id != "" {
+		return factory.Error(taskBothIdAndMessageProvided)
+	}
+
+	if *id != "" {
+		return factory.AddTaskFromInbox(
+			*id,
+			*time,
+			*energy,
+		)
+	} else {
+		return factory.AddTask(
+			*message,
+			*time,
+			*energy,
+		)
+	}
 }

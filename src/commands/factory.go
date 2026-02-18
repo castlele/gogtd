@@ -24,6 +24,7 @@ type CommandsFactory interface {
 		energy string,
 	) Command
 	DeleteTask(id string) Command
+	ToggleFavourite(id string) Command
 
 	Help(message string) Command
 
@@ -113,6 +114,15 @@ func (this *commandsFactoryImpl) AddTask(
 
 func (this *commandsFactoryImpl) DeleteTask(id string) Command {
 	return newDeleteTaskCommand(
+		id,
+		this.clarifyInteractor,
+		this.successOut,
+		this.errOut,
+	)
+}
+
+func (this *commandsFactoryImpl) ToggleFavourite(id string) Command {
+	return newToggleFavouriteCommand(
 		id,
 		this.clarifyInteractor,
 		this.successOut,

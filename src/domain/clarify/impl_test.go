@@ -396,6 +396,102 @@ func TestDeleteTask(t *testing.T) {
 	)
 }
 
+func TestToggleFavourite(t *testing.T) {
+	defer utils.Delete(storageFp)
+
+	t.Run(
+		"GIVEN no tasks in repo WHEN toggling favourite THEN nothing changed",
+		func(t *testing.T) {
+			utils.Delete(storageFp)
+			sut := createInteractor()
+
+			task, err := sut.ToggleFavourite("random_id")
+
+			if task != nil {
+				t.Errorf("Task was toggled favourite, but shouldn't: %v", task)
+			}
+
+			if err == nil {
+				t.Errorf("Error is nil, but shouldn't: %v", err)
+			}
+
+			if !errors.Is(err, repository.ErrNotFound) {
+				t.Errorf(
+					"Got an error of different type. Expected: %v, got: %v",
+					repository.ErrNotFound,
+					err,
+				)
+			}
+		},
+	)
+
+	t.Run(
+		"GIVEN favourite task in repo WHEN toggling favourite THEN favourite set to false",
+		func(t *testing.T) {
+			utils.Delete(storageFp)
+			id := "random"
+			initialTask := models.Task{Id: id, Favourite: true}
+			sut := createInteractor()
+			sut.tasksRepo.Create(initialTask)
+
+			task, err := sut.ToggleFavourite(id)
+
+			if err != nil {
+				panic(err)
+			}
+
+			if task.Id != initialTask.Id {
+				t.Errorf(
+					"Invalid task was toggled favourite. Expected: %v, got: %v",
+					initialTask.Id,
+					task.Id,
+				)
+			}
+
+			if task.Favourite == initialTask.Favourite {
+				t.Errorf(
+					"Favourite wasn't toggle. Expected: %v, got: %v",
+					initialTask,
+					task,
+				)
+			}
+		},
+	)
+
+	t.Run(
+		"GIVEN unfavourite task in repo WHEN toggling favourite THEN favourite set to true",
+		func(t *testing.T) {
+			utils.Delete(storageFp)
+			id := "random"
+			initialTask := models.Task{Id: id, Favourite: false}
+			sut := createInteractor()
+			sut.tasksRepo.Create(initialTask)
+
+			task, err := sut.ToggleFavourite(id)
+
+			if err != nil {
+				panic(err)
+			}
+
+			if task.Id != initialTask.Id {
+				t.Errorf(
+					"Invalid task was toggled favourite. Expected: %v, got: %v",
+					initialTask.Id,
+					task.Id,
+				)
+			}
+
+			if task.Favourite == initialTask.Favourite {
+				t.Errorf(
+					"Favourite wasn't toggle. Expected: %v, got: %v",
+					initialTask,
+					task,
+				)
+			}
+		},
+	)
+}
+
 func createInteractor() *clarifyImpl {
 	return NewClarifyInteractor(createTasksRepo(), createInboxItemsRepo())
 }

@@ -90,7 +90,25 @@ func (this *clarifyImpl) DeleteTask(id string) (*models.Task, error) {
 	return &task, nil
 }
 
-func (c *clarifyImpl) createTask(
+func (this *clarifyImpl) ToggleFavourite(id string) (*models.Task, error) {
+	task, err := this.tasksRepo.Get(id)
+
+	if err != nil {
+		return nil, err
+	}
+
+	task.Favourite = !task.Favourite
+
+	err = this.tasksRepo.Update(task)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &task, nil
+}
+
+func (_ *clarifyImpl) createTask(
 	message string,
 	time int64,
 	energy models.Energy,

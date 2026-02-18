@@ -7,20 +7,20 @@ import (
 	"github.com/castlele/gogtd/src/domain/clarify"
 )
 
-type deleteTaskCommand struct {
+type toggleFavouriteCommand struct {
 	id                string
 	clarifyInteractor clarify.Clarify
 	successOut        io.Writer
 	errOut            io.Writer
 }
 
-func newDeleteTaskCommand(
+func newToggleFavouriteCommand(
 	id string,
 	clarifyInteractor clarify.Clarify,
 	successOut io.Writer,
 	errOut io.Writer,
-) *deleteTaskCommand {
-	return &deleteTaskCommand{
+) *toggleFavouriteCommand {
+	return &toggleFavouriteCommand{
 		id:                id,
 		clarifyInteractor: clarifyInteractor,
 		successOut:        successOut,
@@ -28,8 +28,8 @@ func newDeleteTaskCommand(
 	}
 }
 
-func (this *deleteTaskCommand) Execute() int {
-	task, err := this.clarifyInteractor.DeleteTask(this.id)
+func (this *toggleFavouriteCommand) Execute() int {
+	task, err := this.clarifyInteractor.ToggleFavourite(this.id)
 
 	if err != nil {
 		fmt.Fprintln(this.errOut, err)
