@@ -80,8 +80,14 @@ func (this *clarifyImpl) AddTask(
 	return &task, nil
 }
 
-func (c *clarifyImpl) DeleteTask(id string) (*models.Task, error) {
-	panic("unimplemented")
+func (this *clarifyImpl) DeleteTask(id string) (*models.Task, error) {
+	task, err := this.tasksRepo.Delete(id)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &task, nil
 }
 
 func (c *clarifyImpl) createTask(

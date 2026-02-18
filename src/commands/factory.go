@@ -23,6 +23,7 @@ type CommandsFactory interface {
 		time int64,
 		energy string,
 	) Command
+	DeleteTask(id string) Command
 
 	Help(message string) Command
 
@@ -104,6 +105,15 @@ func (this *commandsFactoryImpl) AddTask(
 		message,
 		time,
 		energy,
+		this.clarifyInteractor,
+		this.successOut,
+		this.errOut,
+	)
+}
+
+func (this *commandsFactoryImpl) DeleteTask(id string) Command {
+	return newDeleteTaskCommand(
+		id,
 		this.clarifyInteractor,
 		this.successOut,
 		this.errOut,

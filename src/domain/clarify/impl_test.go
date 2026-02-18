@@ -311,9 +311,87 @@ func TestAddTask(t *testing.T) {
 }
 
 func TestDeleteTask(t *testing.T) {
+	defer utils.Delete(storageFp)
+
 	t.Run(
-		"",
+		"GIVEN no tasks in repo WHEN try to delete task THEN no task deleted",
 		func(t *testing.T) {
+			utils.Delete(storageFp)
+			sut := createInteractor()
+
+			task, err := sut.DeleteTask("random_id")
+
+			if task != nil {
+				t.Errorf("Task was deleted, but shouldn't: %v", task)
+			}
+
+			if err == nil {
+				t.Errorf("Error is nil, but shouldn't: %v", err)
+			}
+
+			if !errors.Is(err, repository.ErrNotFound) {
+				t.Errorf(
+					"Got an error of different type. Expected: %v, got: %v",
+					repository.ErrNotFound,
+					err,
+				)
+			}
+		},
+	)
+
+	t.Run(
+		"GIVEN tasks in repo "+
+			"WHEN try to delete task that do NOT in the repo "+
+			"THEN no task is deleted",
+		func(t *testing.T) {
+			utils.Delete(storageFp)
+			sut := createInteractor()
+			sut.tasksRepo.Create(models.Task{Id: "Hello"})
+
+			task, err := sut.DeleteTask("random_id")
+
+			if task != nil {
+				t.Errorf("Task was deleted, but shouldn't: %v", task)
+			}
+
+			if err == nil {
+				t.Errorf("Error is nil, but shouldn't: %v", err)
+			}
+
+			if !errors.Is(err, repository.ErrNotFound) {
+				t.Errorf(
+					"Got an error of different type. Expected: %v, got: %v",
+					repository.ErrNotFound,
+					err,
+				)
+			}
+		},
+	)
+
+	t.Run(
+		"GIVEN tasks in repo "+
+			"WHEN try to delete task that is in repo "+
+			"THEN this task is deleted",
+		func(t *testing.T) {
+			utils.Delete(storageFp)
+			id := "random_id"
+			exp := models.Task{Id: id}
+			sut := createInteractor()
+			sut.tasksRepo.Create(exp)
+
+			task, err := sut.DeleteTask(id)
+
+			if err != nil {
+				panic(err)
+			}
+
+			if *task != exp {
+				t.Errorf(
+					"Invalid task deleted. Expected: %v, got: %v",
+					exp,
+					*task,
+				)
+			}
 		},
 	)
 }

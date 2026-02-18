@@ -129,7 +129,17 @@ func ParseArguments(args []string, factory commands.CommandsFactory) commands.Co
 	case "update-task":
 		return nil
 	case "delete-task":
-		return nil
+		if len(args) < 3 {
+			return factory.Error(inboxNoIdToDelete)
+		}
+
+		id := args[2]
+
+		if id == "" {
+			return factory.Error(inboxNoIdToDelete)
+		}
+
+		return factory.DeleteTask(id)
 	case "toggle-favourite":
 		return nil
 
