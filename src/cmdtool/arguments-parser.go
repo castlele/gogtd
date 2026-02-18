@@ -50,6 +50,8 @@ Projects:
 		"-message/-inbox_id, -time, -energy"
 	taskBothIdAndMessageProvided = "You provided both inbox id and message, " +
 		"you can either create task from inbox item or create completely new task"
+
+	taskStatusNotProvided = "You didn't provide status of the task"
 )
 
 func ParseArguments(args []string, factory commands.CommandsFactory) commands.Command {
@@ -105,7 +107,19 @@ func ParseArguments(args []string, factory commands.CommandsFactory) commands.Co
 
 		return factory.ToggleFavourite(id)
 	case "set-status":
-		return nil
+		command, id := parseId(factory, args, taskNoIdPassed)
+
+		if command != nil {
+			return command
+		}
+
+		command, status := parseArg(factory, args, 3, taskStatusNotProvided)
+
+		if command != nil {
+			return command
+		}
+
+		return factory.SetStatus(id, status)
 
 	case "projects":
 		return nil
@@ -130,11 +144,20 @@ func parseId(
 	args []string,
 	errMsg string,
 ) (commands.Command, string) {
-	if len(args) < 3 {
+	return parseArg(factory, args, 2, errMsg)
+}
+
+func parseArg(
+	factory commands.CommandsFactory,
+	args []string,
+	arg int,
+	errMsg string,
+) (commands.Command, string) {
+	if len(args) < arg+1 {
 		return factory.Error(errMsg), ""
 	}
 
-	id := args[2]
+	id := args[arg]
 
 	if id == "" {
 		return factory.Error(errMsg), ""

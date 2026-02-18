@@ -21,4 +21,5 @@ type Clarify interface {
 	DeleteTask(id string) (*models.Task, error)
 
 	ToggleFavourite(id string) (*models.Task, error)
+	SetStatus(id string, status models.TaskStatus) (*models.Task, error)
 }

@@ -108,6 +108,27 @@ func (this *clarifyImpl) ToggleFavourite(id string) (*models.Task, error) {
 	return &task, nil
 }
 
+func (this *clarifyImpl) SetStatus(
+	id string,
+	status models.TaskStatus,
+) (*models.Task, error) {
+	task, err := this.tasksRepo.Get(id)
+
+	if err != nil {
+		return nil, err
+	}
+
+	task.Status = status
+
+	err = this.tasksRepo.Update(task)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &task, nil
+}
+
 func (_ *clarifyImpl) createTask(
 	message string,
 	time int64,

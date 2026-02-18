@@ -492,6 +492,105 @@ func TestToggleFavourite(t *testing.T) {
 	)
 }
 
+func TestSetStatus(t *testing.T) {
+	defer utils.Delete(storageFp)
+
+	t.Run(
+		"GIVEN no tasks in repo WHEN setting status THEN nothing changed",
+		func(t *testing.T) {
+			utils.Delete(storageFp)
+			sut := createInteractor()
+
+			task, err := sut.SetStatus("random_id", models.TaskStatusInProgress)
+
+			if task != nil {
+				t.Errorf(
+					"Task was created duting setting the status, but shouldn't: %v",
+					task,
+				)
+			}
+
+			if err == nil {
+				t.Errorf("Error is nil, but shouldn't: %v", err)
+			}
+
+			if !errors.Is(err, repository.ErrNotFound) {
+				t.Errorf(
+					"Got an error of different type. Expected: %v, got: %v",
+					repository.ErrNotFound,
+					err,
+				)
+			}
+		},
+	)
+
+	t.Run(
+		"GIVEN task in pending status WHEN setting the same status THEN nothing is changed",
+		func(t *testing.T) {
+			utils.Delete(storageFp)
+			id := "random"
+			initialTask := models.Task{Id: id, Status: models.TaskStatusPending}
+			sut := createInteractor()
+			sut.tasksRepo.Create(initialTask)
+
+			task, err := sut.SetStatus(id, models.TaskStatusPending)
+
+			if err != nil {
+				panic(err)
+			}
+
+			if task.Id != initialTask.Id {
+				t.Errorf(
+					"Invalid task changed. Expected: %v, got: %v",
+					initialTask.Id,
+					task.Id,
+				)
+			}
+
+			if task.Status != initialTask.Status {
+				t.Errorf(
+					"Status changed. Expected: %v, got: %v",
+					initialTask,
+					task,
+				)
+			}
+		},
+	)
+
+	t.Run(
+		"GIVEN task in pending status WHEN setting other status THEN status is changed",
+		func(t *testing.T) {
+			utils.Delete(storageFp)
+			id := "random"
+			initialTask := models.Task{Id: id, Status: models.TaskStatusPending}
+			sut := createInteractor()
+			sut.tasksRepo.Create(initialTask)
+
+			task, err := sut.SetStatus(id, models.TaskStatusInProgress)
+
+			if err != nil {
+				panic(err)
+			}
+
+			if task.Id != initialTask.Id {
+				t.Errorf(
+					"Invalid task was changed. Expected: %v, got: %v",
+					initialTask.Id,
+					task.Id,
+				)
+			}
+
+			if task.Status == initialTask.Status {
+				t.Errorf(
+					"Status wasn't changed. Expected: %v, got: %v",
+					initialTask,
+					task,
+				)
+			}
+		},
+	)
+}
+
 func createInteractor() *clarifyImpl {
 	return NewClarifyInteractor(createTasksRepo(), createInboxItemsRepo())
 }
