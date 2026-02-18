@@ -22,7 +22,7 @@ func LoadBytesFromFile(file *os.File) ([]byte, error) {
 }
 
 func OpenFile(path string) (*os.File, error) {
-	return os.OpenFile(path, os.O_RDWR|os.O_TRUNC|os.O_SYNC, 0666)
+	return os.Open(path)
 }
 
 func CreateDir(path string) error {
