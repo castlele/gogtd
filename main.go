@@ -7,6 +7,7 @@ import (
 	"github.com/castlele/gogtd/src/cmdtool"
 	"github.com/castlele/gogtd/src/commands"
 	"github.com/castlele/gogtd/src/config"
+	"github.com/castlele/gogtd/src/domain/clarify"
 	"github.com/castlele/gogtd/src/domain/inbox"
 	"github.com/castlele/gogtd/src/domain/models"
 	"github.com/castlele/gogtd/src/domain/repository"
@@ -32,10 +33,24 @@ func main() {
 		os.Exit(-1)
 	}
 
+	tasksRepo, err := repository.NewFPRepo(
+		conf.GetTasksPath(),
+		func(task models.Task) string {
+			return task.Id
+		},
+	)
+
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(-1)
+	}
+
+	clarifyInteractor := clarify.NewClarifyInteractor(tasksRepo, inboxRepo)
 	inboxInteractor := inbox.NewInboxInteractor(inboxRepo)
 
 	factory := commands.NewCommandsFactory(
 		inboxInteractor,
+		clarifyInteractor,
 		os.Stdout,
 		os.Stderr,
 	)

@@ -12,10 +12,13 @@ import (
 
 const (
 	storageFp = "./gdt"
+	inboxFp   = storageFp + "/inbox.json"
 	tasksFp   = storageFp + "/tasks.json"
 )
 
 func TestGetAll(t *testing.T) {
+	defer utils.Delete(storageFp)
+
 	t.Run(
 		"GIVEN empty repository WHEN getting all tasks THEN returning empty tasks list",
 		func(t *testing.T) {
@@ -62,14 +65,16 @@ func TestGetAll(t *testing.T) {
 	)
 }
 
-func TestAddTask(t *testing.T) {
+func TestConvertToTask(t *testing.T) {
+	defer utils.Delete(storageFp)
+
 	t.Run(
 		"GIVEN empty inbox repo WHEN adding new task THEN error is thrown",
 		func(t *testing.T) {
 			utils.Delete(storageFp)
 			sut := createInteractor()
 
-			task, err := sut.AddTask("random", 0, models.EnergyLow, nil)
+			task, err := sut.ConvertToTask("random", 0, models.EnergyLow, nil)
 
 			if task != nil {
 				t.Errorf("Unexpected task. Expecting nil, but got: %v", task)
@@ -100,7 +105,7 @@ func TestAddTask(t *testing.T) {
 				Message: msg,
 			})
 
-			task, err := sut.AddTask(id, 0, models.EnergyHigh, nil)
+			task, err := sut.ConvertToTask(id, 0, models.EnergyHigh, nil)
 
 			if err != nil {
 				panic(err)
@@ -130,7 +135,7 @@ func TestAddTask(t *testing.T) {
 				Message: msg,
 			})
 
-			task, err := sut.AddTask(id, 0, models.EnergyLow, nil)
+			task, err := sut.ConvertToTask(id, 0, models.EnergyLow, nil)
 
 			if err != nil {
 				t.Errorf("Got unexpected error: %v", err)
@@ -173,7 +178,7 @@ func TestAddTask(t *testing.T) {
 			})
 			time := int64(60 * 1000)
 
-			task, err := sut.AddTask(id, time, models.EnergyLow, nil)
+			task, err := sut.ConvertToTask(id, time, models.EnergyLow, nil)
 
 			if err != nil {
 				t.Errorf("Got unexpected error: %v", err)
@@ -209,7 +214,7 @@ func TestAddTask(t *testing.T) {
 				Message: msg,
 			})
 
-			task, err := sut.AddTask(id, 0, models.EnergyLow, nil)
+			task, err := sut.ConvertToTask(id, 0, models.EnergyLow, nil)
 
 			if err != nil {
 				t.Errorf("Got unexpected error: %v", err)
@@ -247,6 +252,64 @@ func TestAddTask(t *testing.T) {
 	)
 }
 
+func TestAddTask(t *testing.T) {
+	defer utils.Delete(storageFp)
+
+	t.Run(
+		"GIVEN empty tasks repo WHEN adding new task THEN task is added",
+		func(t *testing.T) {
+			utils.Delete(storageFp)
+			msg := "hello, world"
+			sut := createInteractor()
+
+			task, err := sut.AddTask(msg, 0, models.EnergyLow, nil)
+
+			if err != nil {
+				panic(err)
+			}
+
+			if task.Message != msg {
+				t.Errorf("Invalid task created. Expected: %v, got: %v", msg, task)
+				return
+			}
+		},
+	)
+	t.Run(
+		"GIVEN empty tasks repo with none empty inbox "+
+			"WHEN adding new task "+
+			"THEN task is added without affect on inbox",
+		func(t *testing.T) {
+			utils.Delete(storageFp)
+			msg := "hello, world"
+			sut := createInteractor()
+			sut.inboxItemsRepo.Create(
+				models.InboxItem{Id: "random id", Message: "other message"},
+			)
+
+			task, err := sut.AddTask(msg, 0, models.EnergyLow, nil)
+
+			if err != nil {
+				panic(err)
+			}
+
+			items, _ := sut.inboxItemsRepo.List()
+
+			if len(items) != 1 {
+				t.Errorf(
+					"AddTask method affected inbox repo, expected len to be: 1, bug got: %v",
+					len(items),
+				)
+				return
+			}
+
+			if task.Message != msg {
+				t.Errorf("Invalid task created. Expected: %v, got: %v", msg, task)
+				return
+			}
+		},
+	)
+}
+
 func TestDeleteTask(t *testing.T) {
 	t.Run(
 		"",
@@ -270,7 +333,7 @@ func createTasksRepo() repository.Repo[models.Task, string] {
 }
 
 func createInboxItemsRepo() repository.Repo[models.InboxItem, string] {
-	repo, err := repository.NewFPRepo(tasksFp, func(item models.InboxItem) string { return item.Id })
+	repo, err := repository.NewFPRepo(inboxFp, func(item models.InboxItem) string { return item.Id })
 
 	if err != nil {
 		panic(err)

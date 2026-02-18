@@ -35,7 +35,7 @@ func (this *clarifyImpl) GetAll() []models.Task {
 	return tasks
 }
 
-func (this *clarifyImpl) AddTask(
+func (this *clarifyImpl) ConvertToTask(
 	inboxItemId string,
 	time int64,
 	energy models.Energy,
@@ -53,6 +53,15 @@ func (this *clarifyImpl) AddTask(
 		return nil, err
 	}
 
+	return this.AddTask(inboxItem.Message, time, energy, parent)
+}
+
+func (this *clarifyImpl) AddTask(
+	message string,
+	time int64,
+	energy models.Energy,
+	parent *models.TaskParent,
+) (*models.Task, error) {
 	var copyParent models.TaskParent
 
 	if parent != nil {
@@ -61,7 +70,12 @@ func (this *clarifyImpl) AddTask(
 		copyParent = models.NewNextTaskParent()
 	}
 
-	task := this.createTask(&inboxItem, time, energy, copyParent)
+	task := this.createTask(message, time, energy, copyParent)
+	err := this.tasksRepo.Create(task)
+
+	if err != nil {
+		return nil, err
+	}
 
 	return &task, nil
 }
@@ -71,16 +85,18 @@ func (c *clarifyImpl) DeleteTask(id string) (*models.Task, error) {
 }
 
 func (c *clarifyImpl) createTask(
-	item *models.InboxItem,
+	message string,
 	time int64,
 	energy models.Energy,
 	parent models.TaskParent,
 ) models.Task {
 	return models.Task{
-		Id:      uuid.NewString(),
-		Message: item.Message,
-		Time:    time,
-		Energy:  energy,
-		Parent:  parent,
+		Id:        uuid.NewString(),
+		Message:   message,
+		Time:      time,
+		Energy:    energy,
+		Parent:    parent,
+		Status:    models.TaskStatusPending,
+		Favourite: false,
 	}
 }
