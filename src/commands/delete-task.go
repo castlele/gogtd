@@ -36,7 +36,13 @@ func (this *deleteTaskCommand) Execute() int {
 		return -1
 	}
 
-	fmt.Fprintln(this.successOut, task)
+	out, err := prettyPrint(task)
+
+	if err != nil {
+		fmt.Fprintln(this.successOut, task)
+	} else {
+		fmt.Fprintln(this.successOut, out)
+	}
 
 	return 0
 }

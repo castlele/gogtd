@@ -36,7 +36,13 @@ func (this *addInboxCommand) Execute() int {
 		return -1
 	}
 
-	fmt.Fprintln(this.successOut, item)
+	out, err := prettyPrint(item)
+
+	if err != nil {
+		fmt.Fprintln(this.successOut, item)
+	} else {
+		fmt.Fprintln(this.successOut, out)
+	}
 
 	return 0
 }

@@ -23,6 +23,14 @@ func newInboxCommand(
 }
 
 func (this *inboxCommand) Execute() int {
-	fmt.Fprintln(this.successOut, this.inboxInteractor.GetAll())
+	items := this.inboxInteractor.GetAll()
+	out, err := prettyPrint(items)
+
+	if err != nil {
+		fmt.Fprintln(this.successOut, items)
+	} else {
+		fmt.Fprintln(this.successOut, out)
+	}
+
 	return 0
 }

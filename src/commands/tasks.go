@@ -24,6 +24,14 @@ func newTasksCommand(
 }
 
 func (this *tasksCommand) Execute() int {
-	fmt.Fprintln(this.successOut, this.clarifyInteractor.GetAll())
+	tasks := this.clarifyInteractor.GetAll()
+	out, err := prettyPrint(tasks)
+
+	if err != nil {
+		fmt.Fprintln(this.successOut, tasks)
+	} else {
+		fmt.Fprintln(this.successOut, out)
+	}
+
 	return 0
 }
