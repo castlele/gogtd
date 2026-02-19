@@ -41,8 +41,8 @@ Projects:
 	gogtd delete-project <id>
 	gogtd add-step <project_id> -message=<message>`
 
-	inboxNoMessage    = "No message passed to create an inbox item"
-	inboxNoIdToPassed = "No id passed to identify an inbox item"
+	inboxNoMessage  = "No message passed to create an inbox item"
+	inboxNoIdPassed = "No id passed to identify an inbox item"
 
 	taskNoIdPassed = "No id passed to identify a task"
 
@@ -52,6 +52,9 @@ Projects:
 		"you can either create task from inbox item or create completely new task"
 
 	taskStatusNotProvided = "You didn't provide status of the task"
+
+	projectsNoNamePassded = "To create a new project you have to provide its name"
+	projectsNoIdPassed    = "Can't find project without its id"
 )
 
 func ParseArguments(args []string, factory commands.CommandsFactory) commands.Command {
@@ -76,7 +79,7 @@ func ParseArguments(args []string, factory commands.CommandsFactory) commands.Co
 	case "update-inbox":
 		return nil
 	case "delete-inbox":
-		command, id := parseId(factory, args, inboxNoIdToPassed)
+		command, id := parseId(factory, args, inboxNoIdPassed)
 
 		if command != nil {
 			return command
@@ -122,11 +125,23 @@ func ParseArguments(args []string, factory commands.CommandsFactory) commands.Co
 		return factory.SetStatus(id, status)
 
 	case "projects":
-		return nil
+		return factory.Projects()
 	case "add-project":
-		return nil
+		command, name := parseId(factory, args, projectsNoNamePassded)
+
+		if command != nil {
+			return command
+		}
+
+		return factory.AddProject(name)
 	case "delete-project":
-		return nil
+		command, id := parseId(factory, args, projectsNoIdPassed)
+
+		if command != nil {
+			return command
+		}
+
+		return factory.DeleteProject(id)
 	case "add-step":
 		return nil
 

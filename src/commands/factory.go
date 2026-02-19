@@ -5,6 +5,7 @@ import (
 
 	"github.com/castlele/gogtd/src/domain/clarify"
 	"github.com/castlele/gogtd/src/domain/inbox"
+	"github.com/castlele/gogtd/src/domain/project"
 )
 
 type CommandsFactory interface {
@@ -29,29 +30,36 @@ type CommandsFactory interface {
 	ToggleFavourite(id string) Command
 	SetStatus(id string, status string) Command
 
+	Projects() Command
+	AddProject(name string) Command
+	DeleteProject(id string) Command
+
 	Help(message string) Command
 
 	Error(message string) Command
 }
 
 type commandsFactoryImpl struct {
-	inboxInteractor   inbox.Inbox
-	clarifyInteractor clarify.Clarify
-	successOut        io.Writer
-	errOut            io.Writer
+	inboxInteractor    inbox.Inbox
+	clarifyInteractor  clarify.Clarify
+	projectsInteractor project.Project
+	successOut         io.Writer
+	errOut             io.Writer
 }
 
 func NewCommandsFactory(
 	inboxInteractor inbox.Inbox,
 	clarifyInteractor clarify.Clarify,
+	projectsInteractor project.Project,
 	successOut io.Writer,
 	errOut io.Writer,
 ) CommandsFactory {
 	return &commandsFactoryImpl{
-		inboxInteractor:   inboxInteractor,
-		clarifyInteractor: clarifyInteractor,
-		successOut:        successOut,
-		errOut:            errOut,
+		inboxInteractor:    inboxInteractor,
+		clarifyInteractor:  clarifyInteractor,
+		projectsInteractor: projectsInteractor,
+		successOut:         successOut,
+		errOut:             errOut,
 	}
 }
 
@@ -142,6 +150,31 @@ func (this *commandsFactoryImpl) SetStatus(id string, status string) Command {
 		id,
 		status,
 		this.clarifyInteractor,
+		this.successOut,
+		this.errOut,
+	)
+}
+
+func (this *commandsFactoryImpl) Projects() Command {
+	return newProjectsCommand(
+		this.projectsInteractor,
+		this.successOut,
+	)
+}
+
+func (this *commandsFactoryImpl) AddProject(name string) Command {
+	return newAddProjectCommand(
+		name,
+		this.projectsInteractor,
+		this.successOut,
+		this.errOut,
+	)
+}
+
+func (this *commandsFactoryImpl) DeleteProject(id string) Command {
+	return newDeleteProjectCommand(
+		id,
+		this.projectsInteractor,
 		this.successOut,
 		this.errOut,
 	)

@@ -8,6 +8,7 @@ const (
 	inbox     = "/inbox.json"
 	tasks     = "/tasks.json"
 	doneTasks = "/done_tasks.json"
+	projects  = "/projects.json"
 )
 
 func (this *Config) GetInboxPath() string {
@@ -20,4 +21,8 @@ func (this *Config) GetTasksPath() string {
 
 func (this *Config) GetDoneTasksPath() string {
 	return this.Storage + doneTasks
+}
+
+func (this *Config) GetProjectsPath() string {
+	return this.Storage + projects
 }
