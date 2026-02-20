@@ -801,6 +801,7 @@ func createInteractor() *clarifyImpl {
 		createTasksRepo(),
 		createDoneTasksRepo(),
 		createInboxItemsRepo(),
+		createProjectsRepo(),
 	)
 }
 
@@ -826,6 +827,16 @@ func createDoneTasksRepo() repository.Repo[models.Task, string] {
 
 func createInboxItemsRepo() repository.Repo[models.InboxItem, string] {
 	repo, err := repository.NewFPRepo(inboxFp, func(item models.InboxItem) string { return item.Id })
+
+	if err != nil {
+		panic(err)
+	}
+
+	return repo
+}
+
+func createProjectsRepo() repository.Repo[models.Project, string] {
+	repo, err := repository.NewFPRepo(inboxFp, func(proj models.Project) string { return proj.Id })
 
 	if err != nil {
 		panic(err)

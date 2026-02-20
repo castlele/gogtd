@@ -75,6 +75,7 @@ func main() {
 		tasksRepo,
 		doneTasksRepo,
 		inboxRepo,
+		projectsRepo,
 	)
 	projectsInteractor := project.NewProjectInteractor(
 		projectsRepo,

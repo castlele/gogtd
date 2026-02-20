@@ -81,11 +81,13 @@ func (this *addFromInboxTaskCommand) Execute() int {
 		return -1
 	}
 
+	parent, err := getParent(this.parent)
+
 	task, err := this.clarifyInteractor.ConvertToTask(
 		this.id,
 		this.time,
 		energy,
-		nil,
+		parent,
 	)
 
 	if err != nil {
@@ -182,10 +184,10 @@ func getParent(parent string) (*models.TaskParent, error) {
 		id = parseBoxType(comps[0]).String()
 	case "project":
 		taskType = models.ProjectParentType
-		panic("Can't get id for project type")
+		id = comps[0]
 	case "step":
 		taskType = models.StepParentType
-		panic("Can't get id for step type")
+		id = comps[0]
 	default:
 		return nil, fmt.Errorf(
 			"Invalid task type received. Expected one of: box, project, step. But got: %v",

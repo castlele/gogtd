@@ -12,7 +12,7 @@ const (
 
 Inbox:
 	gogtd inbox
-	gogtd add-inbox <Message>
+	gogtd add-inbox <message>
 	gogtd update-inbox <id> [-message=<message>]
 	gogtd delete-inbox <id>
 
@@ -25,8 +25,7 @@ Clarify:
 		-time=<millis>
 		-energy=<low|mid|high>
 	gogtd update-task <id>
-		[-box=<name>]
-		[-project=<name>]
+		[-parent="id::<box|project|step>"]
 		[-tags=<tags comma separated>]
 		[-message=<message>]
 		[-time=<millis>]

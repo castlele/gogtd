@@ -1,6 +1,7 @@
 package clarify
 
 import (
+	"fmt"
 	"slices"
 
 	"github.com/castlele/gogtd/src/domain/models"
@@ -12,6 +13,7 @@ type clarifyImpl struct {
 	tasksRepo      repository.Repo[models.Task, string]
 	doneTasksRepo  repository.Repo[models.Task, string]
 	inboxItemsRepo repository.Repo[models.InboxItem, string]
+	projectsRepo   repository.Repo[models.Project, string]
 }
 
 const (
@@ -22,11 +24,13 @@ func NewClarifyInteractor(
 	tasksRepo repository.Repo[models.Task, string],
 	doneTasksRepo repository.Repo[models.Task, string],
 	inboxItemsRepo repository.Repo[models.InboxItem, string],
+	projectsRepo repository.Repo[models.Project, string],
 ) *clarifyImpl {
 	return &clarifyImpl{
 		tasksRepo:      tasksRepo,
 		doneTasksRepo:  doneTasksRepo,
 		inboxItemsRepo: inboxItemsRepo,
+		projectsRepo:   projectsRepo,
 	}
 }
 
@@ -40,7 +44,10 @@ func (this *clarifyImpl) GetAll(
 	}
 
 	if len(status) == 0 {
-		status = []models.TaskStatus{models.TaskStatusPending, models.TaskStatusInProgress}
+		status = []models.TaskStatus{
+			models.TaskStatusPending,
+			models.TaskStatusInProgress,
+		}
 	}
 
 	doneTasks, err := this.doneTasksRepo.List()
@@ -81,16 +88,20 @@ func (this *clarifyImpl) AddTask(
 	energy models.Energy,
 	parent *models.TaskParent,
 ) (*models.Task, error) {
-	var copyParent models.TaskParent
+	copyParent, err := this.parseParent(parent)
 
-	if parent != nil {
-		copyParent = *parent
-	} else {
-		copyParent = models.NewNextTaskParent()
+	if err != nil {
+		return nil, err
 	}
 
 	task := this.createTask(message, time, energy, copyParent)
-	err := this.tasksRepo.Create(task)
+	err = this.tasksRepo.Create(task)
+
+	if err != nil {
+		return nil, err
+	}
+
+	err = this.updateProjectsIfNeeded(copyParent, task)
 
 	if err != nil {
 		return nil, err
@@ -182,6 +193,56 @@ func (this *clarifyImpl) migrateTaskFromDone(task models.Task) error {
 	}
 
 	err = this.tasksRepo.Create(task)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (this *clarifyImpl) parseParent(
+	parent *models.TaskParent,
+) (models.TaskParent, error) {
+	copyParent := models.NewNextTaskParent()
+
+	switch parent.Type {
+	case models.BoxParentType:
+		copyParent = *parent
+	case models.ProjectParentType:
+		if _, err := this.projectsRepo.Get(parent.Id); err == nil {
+			copyParent = *parent
+		} else {
+			return copyParent, fmt.Errorf("No project found with id: %v", parent.Id)
+		}
+	case models.StepParentType:
+		panic(fmt.Sprintf("Unsupported parent recieved: %v", parent))
+	}
+
+	return copyParent, nil
+}
+
+func (this *clarifyImpl) updateProjectsIfNeeded(
+	parent models.TaskParent,
+	task models.Task,
+) error {
+	if parent.Type != models.ProjectParentType {
+		return nil
+	}
+
+	proj, err := this.projectsRepo.Get(parent.Id)
+
+	if err != nil {
+		return err
+	}
+
+	tasks := make([]string, 0)
+	tasks = append(tasks, proj.Tasks...)
+	tasks = append(tasks, task.Id)
+
+	proj.Tasks = tasks
+
+	err = this.projectsRepo.Update(proj)
 
 	if err != nil {
 		return err
