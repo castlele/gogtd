@@ -2,6 +2,7 @@ package clarify
 
 import (
 	"errors"
+	"slices"
 	"testing"
 
 	"github.com/castlele/gogtd/src/domain/models"
@@ -26,7 +27,7 @@ func TestGetAll(t *testing.T) {
 			utils.Delete(storageFp)
 			sut := createInteractor()
 
-			tasks := sut.GetAll()
+			tasks := sut.GetAll(nil)
 
 			if len(tasks) > 0 {
 				t.Errorf(
@@ -47,11 +48,12 @@ func TestGetAll(t *testing.T) {
 				Message: "Hello, World",
 				Time:    900_000,
 				Energy:  models.EnergyLow,
+				Status:  models.TaskStatusPending,
 			}
 			sut := createInteractor()
 			sut.tasksRepo.Create(task)
 
-			tasks := sut.GetAll()
+			tasks := sut.GetAll(nil)
 
 			if len(tasks) != 1 {
 				t.Errorf("Invalid amount of tasks. Expected: 1, got: %v", len(tasks))
@@ -61,6 +63,147 @@ func TestGetAll(t *testing.T) {
 			if tasks[0] != task {
 				t.Errorf("Invalid task got. Expected: %v, got: %v", tasks[0], task)
 				return
+			}
+		},
+	)
+
+	t.Run(
+		"GIVEN none empty done repo and tasks repo "+
+			"WHEN getting without filter"+
+			"THEN only pending and in_progress tasks are returned",
+		func(t *testing.T) {
+			utils.Delete(storageFp)
+			pendingTask := models.Task{
+				Id:     uuid.NewString(),
+				Status: models.TaskStatusPending,
+			}
+			inProgressTask := models.Task{
+				Id:     uuid.NewString(),
+				Status: models.TaskStatusInProgress,
+			}
+			doneTask := models.Task{
+				Id:     uuid.NewString(),
+				Status: models.TaskStatusDone,
+			}
+			sut := createInteractor()
+			sut.tasksRepo.Create(pendingTask)
+			sut.tasksRepo.Create(inProgressTask)
+			sut.doneTasksRepo.Create(doneTask)
+
+			tasks := sut.GetAll(nil)
+
+			if len(tasks) != 2 {
+				t.Errorf(
+					"Invalid tasks were got, expected: 2, but got: %v",
+					len(tasks),
+				)
+			}
+
+			if slices.Contains(tasks, doneTask) {
+				t.Error("Tasks contain task in done state")
+			}
+
+			if !slices.Contains(tasks, pendingTask) {
+				t.Errorf("Tasks don't contain task in pending state: %v", tasks)
+			}
+
+			if !slices.Contains(tasks, inProgressTask) {
+				t.Errorf("Tasks don't contain task in progress state: %v", tasks)
+			}
+		},
+	)
+
+	t.Run(
+		"GIVEN none empty done repo and tasks repo "+
+			"WHEN getting with done filter"+
+			"THEN only done tasks are returned",
+		func(t *testing.T) {
+			utils.Delete(storageFp)
+			pendingTask := models.Task{
+				Id:     uuid.NewString(),
+				Status: models.TaskStatusPending,
+			}
+			inProgressTask := models.Task{
+				Id:     uuid.NewString(),
+				Status: models.TaskStatusInProgress,
+			}
+			doneTask := models.Task{
+				Id:     uuid.NewString(),
+				Status: models.TaskStatusDone,
+			}
+			sut := createInteractor()
+			sut.tasksRepo.Create(pendingTask)
+			sut.tasksRepo.Create(inProgressTask)
+			sut.doneTasksRepo.Create(doneTask)
+
+			tasks := sut.GetAll([]models.TaskStatus{models.TaskStatusDone})
+
+			if len(tasks) != 1 {
+				t.Errorf(
+					"Invalid tasks were got, expected: 1, but got: %v",
+					len(tasks),
+				)
+			}
+
+			if !slices.Contains(tasks, doneTask) {
+				t.Errorf("Tasks don't contain task in done state: %v", tasks)
+			}
+
+			if slices.Contains(tasks, pendingTask) {
+				t.Errorf("Tasks contain task in pending state: %v", tasks)
+			}
+
+			if slices.Contains(tasks, inProgressTask) {
+				t.Errorf("Tasks contain task in progress state: %v", tasks)
+			}
+		},
+	)
+
+	t.Run(
+		"GIVEN none empty done repo and tasks repo "+
+			"WHEN getting with done and in progress filter"+
+			"THEN only done and in progress tasks are returned",
+		func(t *testing.T) {
+			utils.Delete(storageFp)
+			pendingTask := models.Task{
+				Id:     uuid.NewString(),
+				Status: models.TaskStatusPending,
+			}
+			inProgressTask := models.Task{
+				Id:     uuid.NewString(),
+				Status: models.TaskStatusInProgress,
+			}
+			doneTask := models.Task{
+				Id:     uuid.NewString(),
+				Status: models.TaskStatusDone,
+			}
+			sut := createInteractor()
+			sut.tasksRepo.Create(pendingTask)
+			sut.tasksRepo.Create(inProgressTask)
+			sut.doneTasksRepo.Create(doneTask)
+
+			tasks := sut.GetAll([]models.TaskStatus{
+				models.TaskStatusDone,
+				models.TaskStatusInProgress,
+			})
+
+			if len(tasks) != 2 {
+				t.Errorf(
+					"Invalid tasks were got, expected: 2, but got: %v",
+					len(tasks),
+				)
+			}
+
+			if !slices.Contains(tasks, doneTask) {
+				t.Errorf("Tasks don't contain task in done state: %v", tasks)
+			}
+
+			if slices.Contains(tasks, pendingTask) {
+				t.Errorf("Tasks contain task in pending state: %v", tasks)
+			}
+
+			if !slices.Contains(tasks, inProgressTask) {
+				t.Errorf("Tasks don't contain task in progress state: %v", tasks)
 			}
 		},
 	)

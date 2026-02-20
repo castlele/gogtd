@@ -13,7 +13,7 @@ type CommandsFactory interface {
 	AddInbox(message string) Command
 	DeleteInbox(id string) Command
 
-	Tasks() Command
+	Tasks(status string) Command
 	AddTaskFromInbox(
 		id string,
 		time int64,
@@ -86,8 +86,9 @@ func (this *commandsFactoryImpl) DeleteInbox(id string) Command {
 	)
 }
 
-func (this *commandsFactoryImpl) Tasks() Command {
+func (this *commandsFactoryImpl) Tasks(status string) Command {
 	return newTasksCommand(
+		status,
 		this.clarifyInteractor,
 		this.successOut,
 	)

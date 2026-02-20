@@ -1,6 +1,8 @@
 package clarify
 
 import (
+	"slices"
+
 	"github.com/castlele/gogtd/src/domain/models"
 	"github.com/castlele/gogtd/src/domain/repository"
 	"github.com/google/uuid"
@@ -28,14 +30,28 @@ func NewClarifyInteractor(
 	}
 }
 
-func (this *clarifyImpl) GetAll() []models.Task {
+func (this *clarifyImpl) GetAll(
+	status []models.TaskStatus,
+) []models.Task {
 	tasks, err := this.tasksRepo.List()
 
 	if err != nil {
 		return make([]models.Task, 0)
 	}
 
-	return tasks
+	if len(status) == 0 {
+		status = []models.TaskStatus{models.TaskStatusPending, models.TaskStatusInProgress}
+	}
+
+	doneTasks, err := this.doneTasksRepo.List()
+
+	if err == nil && len(doneTasks) > 0 {
+		tasks = append(tasks, doneTasks...)
+	}
+
+	return slices.DeleteFunc(tasks, func(task models.Task) bool {
+		return !slices.Contains(status, task.Status)
+	})
 }
 
 func (this *clarifyImpl) ConvertToTask(

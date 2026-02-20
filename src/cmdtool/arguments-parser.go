@@ -88,7 +88,7 @@ func ParseArguments(args []string, factory commands.CommandsFactory) commands.Co
 		return factory.DeleteInbox(id)
 
 	case "tasks":
-		return factory.Tasks()
+		return createTasksCommand(factory, args)
 	case "add-task":
 		return createAddTaskCommand(factory, args)
 	case "update-task":
@@ -179,6 +179,19 @@ func parseArg(
 	}
 
 	return nil, id
+}
+
+func createTasksCommand(
+	factory commands.CommandsFactory,
+	args []string,
+) commands.Command {
+	fs := flag.NewFlagSet("tasks", flag.ContinueOnError)
+
+	status := fs.String("status", "all", "")
+
+	fs.Parse(args[2:])
+
+	return factory.Tasks(*status)
 }
 
 func createAddTaskCommand(
