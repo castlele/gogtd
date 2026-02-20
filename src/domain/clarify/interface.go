@@ -4,6 +4,7 @@ import "github.com/castlele/gogtd/src/domain/models"
 
 type Clarify interface {
 	GetAll(
+		projectId *string,
 		status []models.TaskStatus,
 	) []models.Task
 

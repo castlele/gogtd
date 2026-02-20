@@ -10,17 +10,20 @@ import (
 )
 
 type tasksCommand struct {
+	project           string
 	status            string
 	clarifyInteractor clarify.Clarify
 	successOut        io.Writer
 }
 
 func newTasksCommand(
+	project string,
 	status string,
 	clarifyInteractor clarify.Clarify,
 	successOut io.Writer,
 ) *tasksCommand {
 	return &tasksCommand{
+		project:           project,
 		status:            status,
 		clarifyInteractor: clarifyInteractor,
 		successOut:        successOut,
@@ -29,7 +32,10 @@ func newTasksCommand(
 
 func (this *tasksCommand) Execute() int {
 	statuses := this.parseStatuses()
-	tasks := this.clarifyInteractor.GetAll(statuses)
+	tasks := this.clarifyInteractor.GetAll(
+		&this.project,
+		statuses,
+	)
 
 	out, err := prettyPrint(tasks)
 

@@ -27,7 +27,7 @@ func TestGetAll(t *testing.T) {
 			utils.Delete(storageFp)
 			sut := createInteractor()
 
-			tasks := sut.GetAll(nil)
+			tasks := sut.GetAll(nil, nil)
 
 			if len(tasks) > 0 {
 				t.Errorf(
@@ -53,7 +53,7 @@ func TestGetAll(t *testing.T) {
 			sut := createInteractor()
 			sut.tasksRepo.Create(task)
 
-			tasks := sut.GetAll(nil)
+			tasks := sut.GetAll(nil, nil)
 
 			if len(tasks) != 1 {
 				t.Errorf("Invalid amount of tasks. Expected: 1, got: %v", len(tasks))
@@ -90,7 +90,7 @@ func TestGetAll(t *testing.T) {
 			sut.tasksRepo.Create(inProgressTask)
 			sut.doneTasksRepo.Create(doneTask)
 
-			tasks := sut.GetAll(nil)
+			tasks := sut.GetAll(nil, nil)
 
 			if len(tasks) != 2 {
 				t.Errorf(
@@ -136,7 +136,7 @@ func TestGetAll(t *testing.T) {
 			sut.tasksRepo.Create(inProgressTask)
 			sut.doneTasksRepo.Create(doneTask)
 
-			tasks := sut.GetAll([]models.TaskStatus{models.TaskStatusDone})
+			tasks := sut.GetAll(nil, []models.TaskStatus{models.TaskStatusDone})
 
 			if len(tasks) != 1 {
 				t.Errorf(
@@ -182,7 +182,7 @@ func TestGetAll(t *testing.T) {
 			sut.tasksRepo.Create(inProgressTask)
 			sut.doneTasksRepo.Create(doneTask)
 
-			tasks := sut.GetAll([]models.TaskStatus{
+			tasks := sut.GetAll(nil, []models.TaskStatus{
 				models.TaskStatusDone,
 				models.TaskStatusInProgress,
 			})
@@ -204,6 +204,54 @@ func TestGetAll(t *testing.T) {
 
 			if !slices.Contains(tasks, inProgressTask) {
 				t.Errorf("Tasks don't contain task in progress state: %v", tasks)
+			}
+		},
+	)
+
+	t.Run(
+		"GIVEN none empty tasks and projects repos "+
+			"WHEN getting by project filter "+
+			"THEN only project's tasks are got",
+		func(t *testing.T) {
+			utils.Delete(storageFp)
+			projectId := "project"
+			projectTask := models.Task{
+				Id:     uuid.NewString(),
+				Status: models.TaskStatusPending,
+				Parent: models.TaskParent{
+					Id:   projectId,
+					Type: models.ProjectParentType,
+				},
+			}
+			noneProjectTask := models.Task{
+				Id:     uuid.NewString(),
+				Status: models.TaskStatusInProgress,
+			}
+			project := models.Project{
+				Id:    projectId,
+				Name:  "Name",
+				Tasks: []string{projectTask.Id},
+			}
+			sut := createInteractor()
+			sut.projectsRepo.Create(project)
+			sut.tasksRepo.Create(projectTask)
+			sut.tasksRepo.Create(noneProjectTask)
+
+			tasks := sut.GetAll(&projectId, nil)
+
+			if len(tasks) != 1 {
+				t.Errorf(
+					"Invalid tasks were got, expected: 1, but got: %v",
+					len(tasks),
+				)
+			}
+
+			if slices.Contains(tasks, noneProjectTask) {
+				t.Errorf("Tasks contain task that is not from project: %v", tasks)
+			}
+
+			if !slices.Contains(tasks, projectTask) {
+				t.Errorf("Tasks don't contain task that is from project: %v", tasks)
 			}
 		},
 	)

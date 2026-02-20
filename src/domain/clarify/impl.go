@@ -35,6 +35,7 @@ func NewClarifyInteractor(
 }
 
 func (this *clarifyImpl) GetAll(
+	projectId *string,
 	status []models.TaskStatus,
 ) []models.Task {
 	tasks, err := this.tasksRepo.List()
@@ -57,7 +58,15 @@ func (this *clarifyImpl) GetAll(
 	}
 
 	return slices.DeleteFunc(tasks, func(task models.Task) bool {
-		return !slices.Contains(status, task.Status)
+		isProject := false
+
+		if projectId != nil && *projectId != "" {
+			isProject = task.Parent.Id != *projectId
+		}
+
+		isStatus := !slices.Contains(status, task.Status)
+
+		return isStatus || isProject
 	})
 }
 
@@ -205,6 +214,10 @@ func (this *clarifyImpl) parseParent(
 	parent *models.TaskParent,
 ) (models.TaskParent, error) {
 	copyParent := models.NewNextTaskParent()
+
+	if parent == nil {
+		return copyParent, nil
+	}
 
 	switch parent.Type {
 	case models.BoxParentType:

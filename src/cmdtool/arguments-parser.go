@@ -187,10 +187,11 @@ func createTasksCommand(
 	fs := flag.NewFlagSet("tasks", flag.ContinueOnError)
 
 	status := fs.String("status", "all", "")
+	project := fs.String("project", "", "")
 
 	fs.Parse(args[2:])
 
-	return factory.Tasks(*status)
+	return factory.Tasks(*project, *status)
 }
 
 func createAddTaskCommand(
